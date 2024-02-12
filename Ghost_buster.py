@@ -110,7 +110,7 @@ for filename in all_file_names:
     constructor = DistanceTreeConstructor()
     
                                                         
-     JTree = constructor.nj(distance_matrix)
+    NJTree = constructor.nj(distance_matrix)
     
     #root the tree
     NJTree.root_with_outgroup({"name": "Outgroup"}) 
