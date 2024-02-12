@@ -109,8 +109,11 @@ for filename in all_file_names:
     #Create a weird constructor object
     constructor = DistanceTreeConstructor()
     
-                                                        
-    NJTree = constructor.nj(distance_matrix)
+    #commented out to try a new tree inference algorithm                                                     
+    #NJTree = constructor.nj(distance_matrix)
+
+    #This is the experimental code for the new tree inference algorithm called upgma.
+    NJTree = constructor.upgma(distance_matrix)
     
     #root the tree
     NJTree.root_with_outgroup({"name": "Outgroup"}) 
@@ -179,7 +182,7 @@ for i in topo_list:
 	elif i == "23top":
 	    ticker23 += 1
 	else:
-		tickerunknown += 1 
+            tickerunknown += 1 
 
 print(ticker12)
 
