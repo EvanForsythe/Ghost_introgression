@@ -126,7 +126,7 @@ for filename in all_file_names:
     for t in all_terminal_branches:
         if t.name == "P1":
             P1_temp=t
-            P1_bl_temp=t.branch_length	
+            P1_bl_temp=t.branch_length    
         elif t.name == "P2":
             P2_temp=t
             P2_bl_temp=t.branch_length
@@ -175,14 +175,14 @@ ticker23 = 0
 tickerunknown = 0
 
 for i in topo_list: 
-	if i == "12top":
-		ticker12 += 1 
-	elif i == "13top":
-		ticker13 += 1
-	elif i == "23top":
-	    ticker23 += 1
-	else:
-            tickerunknown += 1 
+    if i == "12top":
+        ticker12 += 1 
+    elif i == "13top":
+        ticker13 += 1
+    elif i == "23top":
+        ticker23 += 1
+    else:
+        tickerunknown += 1 
 
 print(ticker12)
 
