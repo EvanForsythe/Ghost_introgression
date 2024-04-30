@@ -6,8 +6,10 @@ import os
 import re
 import sys
 import glob
+import shutil
 import numpy as np 
 import pandas as pd
+import subprocess
 import argparse
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -18,8 +20,8 @@ from Bio import Phylo
 from Bio.Phylo.TreeConstruction import DistanceTreeConstructor
 from Bio.Phylo.TreeConstruction import DistanceCalculator
 
-#get the command line arguments
 
+#get the command line arguments
 parser = argparse.ArgumentParser(description='Script for performing ghost int testing') 
 
 parser.add_argument('-out', '--outgroup', type=str, metavar='', required=True, help='unique str found in outgroup seqID')
@@ -27,6 +29,8 @@ parser.add_argument('-P1', '--pop1', type=str, metavar='', required=True, help='
 parser.add_argument('-P2', '--pop2', type=str, metavar='', required=True, help='unique str found in pop2 seqID')
 parser.add_argument('-P3', '--pop3', type=str, metavar='', required=True, help='unique str found in pop3 seqID')
 parser.add_argument('-i', '--indir', type=str, metavar='', required=True, help='full path to input directory (should end in "/")')
+parser.add_argument('-j', '--job', type=str, metavar='', required=True, help='name for the job to create file names')
+
 
 args = parser.parse_args() 
 
@@ -35,48 +39,57 @@ P1 = args.pop1
 P2 = args.pop2
 P3 = args.pop3
 indir = args.indir
+job = args.job
 
 print(f"outgroup taxon: {outgroup}")
 print(f"population 1 taxon: {P1}")
 print(f"population 2 taxon: {P2}")
 print(f"population 3 taxon: {P3}") 
 
+#create an output directory
+out_dir = "OUT_"+job+"/"
 
+#Make a directory for storing stats
+if os.path.isdir(out_dir):
+    while True:
+        user_input = input("This jobname already exists. Would you like to overwrite? (y/n) \n")
+        if user_input == 'y':
+            print("Clearing contents of " + out_dir + " All output files will be written to this folder\n")
+            shutil.rmtree(out_dir)
+            os.makedirs(out_dir)
+            break
+        if user_input == 'n':
+            print('Unique jobname required. Exiting...')
+            sys.exit()
+            break
+        else:
+            print("Command not recognized.\n")
+else:
+    os.makedirs(out_dir)
+    print('created folder: '+out_dir+'\nAll output files will be written to this folder\n')
+
+#make a directory for the trees
+os.makedirs(out_dir+"alns_and_trees/")
 
 #get a list of seq files to analyze 
-
 all_file_names = glob.glob(indir+"*.fasta")
-#print(all_file_names)
 
-#read in the first file in the list and store as a python alignment object.
-
-#filename = all_file_names[0]
-
-#loop through all files
-
-#creating an empty dataframe
-
+#create an empty dataframe
 node_depth_df = pd.DataFrame()
 
+#Add columns
 node_depth_df['gene_name'] = [] 
-
 node_depth_df['node_depth'] = []
-
 node_depth_df['topology'] = []
 
+#Loop through each file
 for filename in all_file_names:
     sequences = SeqIO.parse(filename, 'fasta')
 
-#removing the hard coding of the populations in favor of dynamic inputs.
-    '''
-    P1 = "Bs_"
-    P2 = "Cr_"
-    P3 = "At_"
-    outgroup = "Es_"
-    '''
-    
+    #Create an empty list    
     keeper_rec_list=[]
-    
+
+    #loop through each sequence in the file    
     for record in sequences:
         if P1 in record.id:
             #print(record.id)
@@ -99,8 +112,11 @@ for filename in all_file_names:
             out_rec_temp.id = "Outgroup"
             keeper_rec_list.append(out_rec_temp)
             
+    #Create an alignment of sequences
     keeper_aln = Bio.Align.MultipleSeqAlignment(keeper_rec_list)
-    
+    AlignIO.write(keeper_aln, out_dir+"alns_and_trees/pruned_"+filename.replace(indir, ""), "fasta")
+    sys.exit()
+
     calculator = DistanceCalculator('identity')
     
     distance_matrix = calculator.get_distance(keeper_aln)
