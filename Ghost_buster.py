@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 import subprocess
 import argparse
+import seaborn as sns
+import matplotlib.pyplot as plt
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio import AlignIO
@@ -50,6 +52,7 @@ print(f"population 3 taxon: {P3}")
 #create an output directory
 out_dir = "OUT_"+job+"/"
 
+'''
 #Make a directory for storing stats
 if os.path.isdir(out_dir):
     while True:
@@ -175,6 +178,7 @@ for tree_file in tree_file_names:
     print(f"topology: {topo_str} node depth: {node_depth}")
 
 node_depth_df.to_csv(out_dir+"node_depths.csv" , index=False)
+'''
 
 node_depth_df = pd.read_csv(out_dir+"node_depths.csv")
 
@@ -182,12 +186,10 @@ topo_list  = list(node_depth_df["topology"])
 
 #print(topo_list)
 
+#create counter of tree topologies
 ticker12 = 0
-
 ticker13 = 0
-
 ticker23 = 0
-
 tickerunknown = 0
 
 for i in topo_list: 
@@ -212,107 +214,44 @@ d_stat = (ticker23-ticker13)/(ticker23+ticker13)
 
 print(f"your d statistic is: {d_stat}")
 
+###### start generating statistics 
 
+#remove 13top from plot output
+node_depth_df = node_depth_df.drop(node_depth_df[node_depth_df['topology'] == '13top'].index)
 
+#create violin Plot
+#plt.rcdefaults()
+sns.violinplot(x = "topology", y = "node_depth", data = node_depth_df, split = True)
+plt.ylim(0,0.5)
+plt.savefig(out_dir+"violin_plot.pdf")
+plt.close()
 
+avg_12top=np.average(list(node_depth_df.loc[node_depth_df['topology'] == '12top']["node_depth"]))
+avg_23top=np.average(list(node_depth_df.loc[node_depth_df['topology'] == '23top']["node_depth"]))
+delta=avg_12top-avg_23top
+print(delta)
 
+#Bootstrap resample
 
+#create empty list for bootstrap deltas
+delta_reps=[]
 
+for i in range(0,100):
+    rand_df=node_depth_df.sample(n=len(node_depth_df.index), replace=True)
 
-###iqtree -s pruned_At_5G42420.fasta -m TEST -nt 1
-'''
-    calculator = DistanceCalculator('identity')
-    
-    distance_matrix = calculator.get_distance(keeper_aln)
-    #print(distance_matrix)
-    
-    #Create a weird constructor object
-    constructor = DistanceTreeConstructor()
-    
-    #commented out to try a new tree inference algorithm                                                     
-    #NJTree = constructor.nj(distance_matrix)
+    rand_avg_12top=np.average(list(rand_df.loc[rand_df['topology'] == '12top']["node_depth"]))
+    rand_avg_23top=np.average(list(rand_df.loc[rand_df['topology'] == '23top']["node_depth"]))
+    rand_delta=rand_avg_12top-rand_avg_23top
+    delta_reps.append(rand_delta)
 
-    #This is the experimental code for the new tree inference algorithm called upgma.
-    NJTree = constructor.upgma(distance_matrix)
-    
-    #root the tree
-    NJTree.root_with_outgroup({"name": "Outgroup"}) 
-    
-    # Draw the phlyogenetic tree using terminal
-    #Bio.Phylo.draw_ascii(NJTree)
-    
-    all_terminal_branches = NJTree.get_terminals()
-    
-    for t in all_terminal_branches:
-        if t.name == "P1":
-            P1_temp=t
-            P1_bl_temp=t.branch_length    
-        elif t.name == "P2":
-            P2_temp=t
-            P2_bl_temp=t.branch_length
-        elif t.name == "P3":
-            P3_temp=t
-            P3_bl_temp=t.branch_length
-        else:
-            out_temp=t
-            
-    P1_and_P2=[P1_temp, P2_temp]
-    P1_and_P3=[P1_temp, P3_temp]
-    P2_and_P3=[P2_temp, P3_temp]
-    
-    if bool(NJTree.is_monophyletic(P1_and_P2)):
-        topo_str = "12top"
-        node_depth=P1_bl_temp + P2_bl_temp
-    elif bool(NJTree.is_monophyletic(P1_and_P3)):
-        topo_str = "13top"
-        node_depth=P1_bl_temp + P3_bl_temp
-    elif bool(NJTree.is_monophyletic(P2_and_P3)):
-        topo_str = "23top"
-        node_depth=P2_bl_temp + P3_bl_temp
-    else:
-        topo_str = "Unknown"
-        node_depth="Unknown" 
-        
-    node_depth_df.loc[len(node_depth_df.index)] = [filename, node_depth, topo_str]
-    print(f"topology: {topo_str} node depth: {node_depth}")
-    
-#print(node_depth_df)
+print(delta_reps)
+print(len(delta_reps))
 
-node_depth_df.to_csv("test.csv" , index=False)
+#create kernal density plot
+plt.rcdefaults()
+sns.kdeplot(delta_reps)
+plt.axvline(x = 0, color = 'b')
+plt.savefig(out_dir+"delta_plot.pdf")
+plt.close()
 
-node_depth_df = pd.read_csv("test.csv")
-
-topo_list  = list(node_depth_df["topology"])
-
-#print(topo_list)
-
-ticker12 = 0
-
-ticker13 = 0
-
-ticker23 = 0
-
-tickerunknown = 0
-
-for i in topo_list: 
-    if i == "12top":
-        ticker12 += 1 
-    elif i == "13top":
-        ticker13 += 1
-    elif i == "23top":
-        ticker23 += 1
-    else:
-        tickerunknown += 1 
-
-print(ticker12)
-
-print(ticker13)
-
-print(ticker23)
-
-print(tickerunknown)
-
-d_stat = (ticker23-ticker13)/(ticker23+ticker13) 
-
-print(f"your d statistic is: {d_stat}")
-'''
+#conduct z_test and get a p_value
