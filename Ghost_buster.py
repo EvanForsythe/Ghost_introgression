@@ -13,6 +13,7 @@ import subprocess
 import argparse
 import seaborn as sns
 import matplotlib.pyplot as plt
+import scipy.stats as stats
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio import AlignIO
@@ -247,11 +248,34 @@ for i in range(0,100):
 print(delta_reps)
 print(len(delta_reps))
 
+#conduct z_test and get a p_value
+
+# Given information
+sample_mean = 0
+population_mean = np.average(delta_reps)
+print('pop mean:',population_mean)
+population_std = stats.tstd(delta_reps)
+print('pop std:',population_std)
+sample_size = len(delta_reps)
+print('sample size:',sample_size)
+
+# compute the z-score
+z_score = (sample_mean-population_mean)/(population_std/np.sqrt(sample_size))
+print('Z-Score :',z_score)
+
+# P-Value : Probability of getting less than a Z-score
+p_value = (1-stats.norm.cdf(z_score))*2   #two-tailed test
+print(f'p-value :{p_value}')
+
 #create kernal density plot
 plt.rcdefaults()
 sns.kdeplot(delta_reps)
 plt.axvline(x = 0, color = 'b')
+plt.title(f"Distribution mean: {population_mean}\np_value: {p_value}")
 plt.savefig(out_dir+"delta_plot.pdf")
 plt.close()
 
-#conduct z_test and get a p_value
+
+
+
+
