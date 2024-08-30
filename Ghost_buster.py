@@ -53,7 +53,7 @@ print(f"population 3 taxon: {P3}")
 #create an output directory
 out_dir = "OUT_"+job+"/"
 
-'''
+
 #Make a directory for storing stats
 if os.path.isdir(out_dir):
     while True:
@@ -92,6 +92,7 @@ counter = 0
 
 #Loop through each file
 for filename in all_file_names:
+    print(filename)
     #next three lines are for quick testing
     #counter += 1
     #if counter > 100:
@@ -179,9 +180,9 @@ for tree_file in tree_file_names:
     print(f"topology: {topo_str} node depth: {node_depth}")
 
 node_depth_df.to_csv(out_dir+"node_depths.csv" , index=False)
-'''
 
-node_depth_df = pd.read_csv(out_dir+"node_depths.csv")
+
+#node_depth_df = pd.read_csv(out_dir+"node_depths.csv")
 
 topo_list  = list(node_depth_df["topology"])
 
