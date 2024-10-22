@@ -7,15 +7,22 @@
 5. [Examples](#examples)
 
 ## <ins>**Introduction**</ins> <a name="intro"></a>
+Ghost Buster is a python tool for testing whether introgression events have the divergence signatures most consistent with 'true'/'ingroup' introgression versus 'ghost' introgression. Note that Ghost Buster is not meant to identify whether introgression has occured in the first place (see existing tests such as the D-statistic and much more). Instead, Ghost Buster should only be applied to gain further resolution/insight once an introgression event have been detected. 
 
 ## <ins>**Installing Dependencies**</ins> <a name="dependencies"></a>
+
+We use conda to create a virtual environment for installing all needed dependencies. We provide a yml file, which users can use to setup an identical environment. To do so, run:
+```bash
+conda env create -f ghost_int_env.yml
+```
+
 
 ## <ins>**Running Ghost Buster**</ins> <a name="running"></a>
 
 ## <ins>**Arguments**</ins> <a name="arguments"></a>
 These arguments can also be referenced in your command line using the -h flag.
 ```bash
-./Ghost_Buster.py -h
+python Ghost_Buster.py -h
 ```
 
 UNDER CONSTRUCTION
