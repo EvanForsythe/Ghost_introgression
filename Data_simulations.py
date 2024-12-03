@@ -18,6 +18,9 @@ import pandas as pd
 import shutil as sh
 from Bio import SeqIO
 
+#Homemade modules
+from internal_functions import check_dat
+
 #Set wd
 working_dir = sys.path[0]+'/' 
 os.chdir(working_dir)
@@ -33,7 +36,6 @@ parser.add_argument('-m', '--Mut_rate', type=float, metavar='', required=False, 
 parser.add_argument('-r', '--Recomb_rate', type=float, metavar='', required=False,default=0.0000000001, help='Specify the recomb rate (default = 0.0000000001)')
 parser.add_argument('-n', '--Ne', type=int, metavar='', required=False, default=10000, help='Specify the effective pop size (Ne) (default = 10000)')
 parser.add_argument('-g','--ghost', action='store_true', required=False, help='Add this flag to to simulate ghost introgression. Otherwise introgression will be "true"/"ingroup" introgression from P3 to P2"')
-
 
 
 #Time arguments
@@ -58,6 +60,21 @@ t_sp12=args.t_sp12
 t_sp123=args.t_sp123
 t_sp123G=args.t_sp123G
 t_sp123G4=args.t_sp123G4
+
+
+# Apply the function to check status of all user inputs
+check_dat("JOBname", str)
+check_dat("Seq_len", int)
+check_dat("Prop_int", float)
+check_dat("Mut_rate", float)
+check_dat("Recomb_rate", float)
+check_dat("Ne", int)
+check_dat("ghost", bool)
+check_dat("t_int", int)
+check_dat("t_sp12", int)
+check_dat("t_sp123", int)
+check_dat("t_sp123G", int)
+check_dat("t_sp123G4", int)
 
 #Store output dir as a variable
 out_dir= 'OUT_'+JOBname+'/'
@@ -225,7 +242,6 @@ def sliding_window_fasta(input_fasta, output_dir):
         # Write the windowed sequences to a new FASTA file
         output_file = os.path.join(output_dir, f"window_{window_num + 1:04}.fasta")
         SeqIO.write(window_records, output_file, "fasta")
-        print(f"Created: {output_file}")
 
         # Stop if end has reached the alignment length
         if end >= alignment_length:

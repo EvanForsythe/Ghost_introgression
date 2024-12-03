@@ -23,6 +23,8 @@ from Bio import Phylo
 from Bio.Phylo.TreeConstruction import DistanceTreeConstructor
 from Bio.Phylo.TreeConstruction import DistanceCalculator
 
+#Homemade modules
+from internal_functions import check_dat
 
 #get the command line arguments
 parser = argparse.ArgumentParser(description='Script for performing ghost int testing') 
@@ -45,6 +47,16 @@ indir = args.indir
 job = args.job
 threads = args.threads
 
+#Check the tpyes of variables
+check_dat("outgroup", str)
+check_dat("P1", str)
+check_dat("P2", str)
+check_dat("P3", str)
+check_dat("indir", str)
+check_dat("job", str)
+check_dat("threads", int)
+
+
 print(f"outgroup taxon: {outgroup}")
 print(f"population 1 taxon: {P1}")
 print(f"population 2 taxon: {P2}")
@@ -52,7 +64,6 @@ print(f"population 3 taxon: {P3}")
 
 #create an output directory
 out_dir = "OUT_"+job+"/"
-
 
 #Make a directory for storing stats
 if os.path.isdir(out_dir):
@@ -92,7 +103,6 @@ counter = 0
 
 #Loop through each file
 for filename in all_file_names:
-    print(filename)
     #next three lines are for quick testing
     #counter += 1
     #if counter > 100:
@@ -136,7 +146,7 @@ pruned_file_names = glob.glob(out_dir+"alns_and_trees/"+"pruned*.fasta")
 for file in pruned_file_names:
     tree_command = ["iqtree", "-s", file, "-m", "TEST", "-nt", threads]
     #print(tree_command)
-    subprocess.run(tree_command)
+    subprocess.run(tree_command, stdout = subprocess.DEVNULL)
 
 #get a list of tree files to analyze
 tree_file_names = glob.glob(out_dir+"alns_and_trees/"+"pruned*.treefile")
@@ -177,12 +187,23 @@ for tree_file in tree_file_names:
         node_depth="Unknown" 
         
     node_depth_df.loc[len(node_depth_df.index)] = [tree_file, node_depth, topo_str]
-    print(f"topology: {topo_str} node depth: {node_depth}")
+    #print(f"topology: {topo_str} node depth: {node_depth}")
 
 node_depth_df.to_csv(out_dir+"node_depths.csv" , index=False)
 
-
 #node_depth_df = pd.read_csv(out_dir+"node_depths.csv")
+
+
+# write to a quant file
+quant_log_file = "Quant_results_log.tsv"
+
+#Create the quantitative data log file
+if not os.path.isfile(quant_log_file):
+	with open(quant_log_file, "a") as f:
+		f.write("Job_name\tn_12top\tn_23top\tn_13top\tn_unknown_top\td_stat\tavg_12top\tavg_23top\tdelta\trep_pop_mean\tz_score\tp_value\n")
+
+
+
 
 topo_list  = list(node_depth_df["topology"])
 
@@ -204,14 +225,14 @@ for i in topo_list:
     else:
         tickerunknown += 1 
 
-print(ticker12)
+#Make sure that none of the tickers are
+if ticker12 == 0 or ticker12 == 0 or ticker12 == 0:
+    print("ERROR: one of the topologies was present zero times")
+    with open (quant_log_file, "a") as f:
+         f.write(f"{job}\t{ticker12}\t{ticker23}\t{ticker13}\t{tickerunknown}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\n")
+    sys.exit()
 
-print(ticker13)
-
-print(ticker23)
-
-print(tickerunknown)
-
+# Calculate the D-statistic
 d_stat = (ticker23-ticker13)/(ticker23+ticker13) 
 
 print(f"your d statistic is: {d_stat}")
@@ -231,7 +252,6 @@ plt.close()
 avg_12top=np.average(list(node_depth_df.loc[node_depth_df['topology'] == '12top']["node_depth"]))
 avg_23top=np.average(list(node_depth_df.loc[node_depth_df['topology'] == '23top']["node_depth"]))
 delta=avg_12top-avg_23top
-print(delta)
 
 #Bootstrap resample
 
@@ -255,7 +275,10 @@ print(len(delta_reps))
 sample_mean = 0
 population_mean = np.average(delta_reps)
 print('pop mean:',population_mean)
-population_std = stats.tstd(delta_reps)
+
+#population_std = stats.tstd(delta_reps)
+population_std = np.std(delta_reps, ddof=0)
+
 print('pop std:',population_std)
 sample_size = len(delta_reps)
 print('sample size:',sample_size)
@@ -264,8 +287,9 @@ print('sample size:',sample_size)
 z_score = (sample_mean-population_mean)/(population_std/np.sqrt(sample_size))
 print('Z-Score :',z_score)
 
+
 # P-Value : Probability of getting less than a Z-score
-p_value = (1-stats.norm.cdf(z_score))*2   #two-tailed test
+p_value = (1-stats.norm.cdf(abs(z_score)))*2   #two-tailed test
 print(f'p-value :{p_value}')
 
 #create kernal density plot
@@ -276,6 +300,10 @@ plt.title(f"Distribution mean: {population_mean}\np_value: {p_value}")
 plt.savefig(out_dir+"delta_plot.pdf")
 plt.close()
 
+
+#Write to the quant file
+with open (quant_log_file, "a") as f:
+	f.write(f"{job}\t{ticker12}\t{ticker23}\t{ticker13}\t{tickerunknown}\t{d_stat}\t{avg_12top}\t{avg_23top}\t{delta}\t{population_mean}\t{z_score}\t{p_value}\n")
 
 
 
