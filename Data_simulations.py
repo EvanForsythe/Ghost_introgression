@@ -63,18 +63,18 @@ t_sp123G4=args.t_sp123G4
 
 
 # Apply the function to check status of all user inputs
-check_dat("JOBname", str)
-check_dat("Seq_len", int)
-check_dat("Prop_int", float)
-check_dat("Mut_rate", float)
-check_dat("Recomb_rate", float)
-check_dat("Ne", int)
-check_dat("ghost", bool)
-check_dat("t_int", int)
-check_dat("t_sp12", int)
-check_dat("t_sp123", int)
-check_dat("t_sp123G", int)
-check_dat("t_sp123G4", int)
+check_dat(JOBname, "JOBname", str)
+check_dat(Seq_len, "Seq_len", int)
+check_dat(Prop_int, "Prop_int", float)
+check_dat(Mut_rate, "Mut_rate", float)
+check_dat(Recomb_rate, "Recomb_rate", float)
+check_dat(Ne, "Ne", int)
+check_dat(ghost, "ghost", bool)
+check_dat(t_int, "t_int", int)
+check_dat(t_sp12, "t_sp12", int)
+check_dat(t_sp123, "t_sp123", int)
+check_dat(t_sp123G, "t_sp123G", int)
+check_dat(t_sp123G4, "t_sp123G4", int)
 
 #Store output dir as a variable
 out_dir= 'OUT_'+JOBname+'/'
@@ -127,7 +127,7 @@ if not ghost:
         time=t_int, source="Pop2", dest="Pop3", proportion=Prop_int)
 else:
     demography.add_mass_migration(
-        time=t_int, source="Pop2", dest="Ghost", proportion=Prop_int)
+        time=t_int, source="Pop1", dest="Ghost", proportion=Prop_int)
 
 # Speciation event
 demography.add_mass_migration(

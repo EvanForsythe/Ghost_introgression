@@ -35,7 +35,7 @@ parser.add_argument('-P2', '--pop2', type=str, metavar='', required=True, help='
 parser.add_argument('-P3', '--pop3', type=str, metavar='', required=True, help='unique str found in pop3 seqID')
 parser.add_argument('-i', '--indir', type=str, metavar='', required=True, help='full path to input directory (should end in "/")')
 parser.add_argument('-j', '--job', type=str, metavar='', required=True, help='name for the job to create file names')
-parser.add_argument('-t', '--threads', type=str, metavar='', required=True, help='number of threads to use for tree inference')
+parser.add_argument('-t', '--threads', type=int, metavar='', required=True, help='number of threads to use for tree inference')
 
 args = parser.parse_args() 
 
@@ -47,14 +47,14 @@ indir = args.indir
 job = args.job
 threads = args.threads
 
-#Check the tpyes of variables
-check_dat("outgroup", str)
-check_dat("P1", str)
-check_dat("P2", str)
-check_dat("P3", str)
-check_dat("indir", str)
-check_dat("job", str)
-check_dat("threads", int)
+# Check the types of variables
+check_dat(outgroup, "outgroup", str)
+check_dat(P1, "P1", str)
+check_dat(P2, "P2", str)
+check_dat(P3, "P3", str)
+check_dat(indir, "indir", str)
+check_dat(job, "job", str)
+check_dat(threads, "threads", int)
 
 
 print(f"outgroup taxon: {outgroup}")
@@ -101,6 +101,8 @@ node_depth_df['topology'] = []
 #counter is for testing purposes 
 counter = 0
 
+print("Creating pruned alignments...")
+
 #Loop through each file
 for filename in all_file_names:
     #next three lines are for quick testing
@@ -143,8 +145,10 @@ for filename in all_file_names:
 #get a list of pruned seq files to analyze 
 pruned_file_names = glob.glob(out_dir+"alns_and_trees/"+"pruned*.fasta")
 
+print(f"Inferring gene trees for {len(pruned_file_names)} alignments...")
+
 for file in pruned_file_names:
-    tree_command = ["iqtree", "-s", file, "-m", "TEST", "-nt", threads]
+    tree_command = ["iqtree", "-s", file, "-m", "TEST", "-nt", str(threads)]
     #print(tree_command)
     subprocess.run(tree_command, stdout = subprocess.DEVNULL)
 
@@ -189,6 +193,8 @@ for tree_file in tree_file_names:
     node_depth_df.loc[len(node_depth_df.index)] = [tree_file, node_depth, topo_str]
     #print(f"topology: {topo_str} node depth: {node_depth}")
 
+print("Writing node depth file...")
+
 node_depth_df.to_csv(out_dir+"node_depths.csv" , index=False)
 
 #node_depth_df = pd.read_csv(out_dir+"node_depths.csv")
@@ -201,8 +207,6 @@ quant_log_file = "Quant_results_log.tsv"
 if not os.path.isfile(quant_log_file):
 	with open(quant_log_file, "a") as f:
 		f.write("Job_name\tn_12top\tn_23top\tn_13top\tn_unknown_top\td_stat\tavg_12top\tavg_23top\tdelta\trep_pop_mean\tz_score\tp_value\n")
-
-
 
 
 topo_list  = list(node_depth_df["topology"])
@@ -226,8 +230,8 @@ for i in topo_list:
         tickerunknown += 1 
 
 #Make sure that none of the tickers are
-if ticker12 == 0 or ticker12 == 0 or ticker12 == 0:
-    print("ERROR: one of the topologies was present zero times")
+if ticker12 < 5 or ticker23 < 5:
+    print("ERROR: one of the required topologies was present less than 5 times")
     with open (quant_log_file, "a") as f:
          f.write(f"{job}\t{ticker12}\t{ticker23}\t{ticker13}\t{tickerunknown}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\n")
     sys.exit()
@@ -235,16 +239,17 @@ if ticker12 == 0 or ticker12 == 0 or ticker12 == 0:
 # Calculate the D-statistic
 d_stat = (ticker23-ticker13)/(ticker23+ticker13) 
 
-print(f"your d statistic is: {d_stat}")
+
+print(f"Number of 12-top trees: {ticker12}")
+print(f"Number of 23-top trees: {ticker23}")
+print(f"Number of 13-top trees: {ticker13}")
+print(f"D-statistic based on tree counts is: {d_stat}")
 
 ###### start generating statistics 
 
-#remove 13top from plot output
-node_depth_df = node_depth_df.drop(node_depth_df[node_depth_df['topology'] == '13top'].index)
-
 #create violin Plot
 #plt.rcdefaults()
-sns.violinplot(x = "topology", y = "node_depth", data = node_depth_df, split = True)
+sns.violinplot(x = "topology", y = "node_depth", data = node_depth_df.drop(node_depth_df[node_depth_df['topology'] == '13top'].index), split = True)
 plt.ylim(0,0.5)
 plt.savefig(out_dir+"violin_plot.pdf")
 plt.close()
@@ -254,6 +259,8 @@ avg_23top=np.average(list(node_depth_df.loc[node_depth_df['topology'] == '23top'
 delta=avg_12top-avg_23top
 
 #Bootstrap resample
+
+print("Running bootstrap resampling for delta statistic")
 
 #create empty list for bootstrap deltas
 delta_reps=[]
@@ -265,9 +272,6 @@ for i in range(0,100):
     rand_avg_23top=np.average(list(rand_df.loc[rand_df['topology'] == '23top']["node_depth"]))
     rand_delta=rand_avg_12top-rand_avg_23top
     delta_reps.append(rand_delta)
-
-print(delta_reps)
-print(len(delta_reps))
 
 #conduct z_test and get a p_value
 
@@ -306,5 +310,5 @@ with open (quant_log_file, "a") as f:
 	f.write(f"{job}\t{ticker12}\t{ticker23}\t{ticker13}\t{tickerunknown}\t{d_stat}\t{avg_12top}\t{avg_23top}\t{delta}\t{population_mean}\t{z_score}\t{p_value}\n")
 
 
-
+print("Done!")
 
