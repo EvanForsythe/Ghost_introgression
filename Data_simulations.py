@@ -39,7 +39,7 @@ parser.add_argument('-g','--ghost', action='store_true', required=False, help='A
 
 
 #Time arguments
-parser.add_argument('-1', '--t_int', type=int, metavar='', required=False, default=40000 , help='Time of introgression (years ago) (default = 40000)')
+parser.add_argument('-i', '--t_int', type=int, metavar='', required=False, default=40000 , help='Time of introgression (years ago) (default = 40000)')
 parser.add_argument('-2', '--t_sp12', type=int, metavar='', required=False,default=80000 , help='Time of first most recent speciation (years ago) (default = 80000)')
 parser.add_argument('-3', '--t_sp123', type=int, metavar='', required=False,default=120000 , help='Time of second most recent speciation (default = 120000)')
 parser.add_argument('-G', '--t_sp123G', type=int, metavar='', required=False, default=160000 , help='Time of third  most recent speciation (default = 160000)')
@@ -246,7 +246,7 @@ def sliding_window_fasta(input_fasta, output_dir):
         # Stop if end has reached the alignment length
         if end >= alignment_length:
             break
-
+    print("Done!")
 
 if __name__ == "__main__":
     sliding_window_fasta(out_dir+"full_chromosome_renamed.fa", out_dir+"single_gene_alns/")
