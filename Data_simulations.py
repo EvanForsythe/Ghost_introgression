@@ -17,6 +17,7 @@ import math
 import pandas as pd
 import shutil as sh
 from Bio import SeqIO
+import itertools
 
 #Homemade modules
 from internal_functions import check_dat
@@ -121,13 +122,20 @@ for t_name in taxa_names:
 #t_sp123=120000
 #t_sp1234=200000
 
+# Add introgression and speciation events
+
+# Track introgression events manually
+introgression_events = []
+
 #Ask if we're in ghost mode or not
 if not ghost:
     demography.add_mass_migration(
         time=t_int, source="Pop2", dest="Pop3", proportion=Prop_int)
+    introgression_events.append({"time": t_int, "source": "Pop2", "dest": "Pop3", "proportion": Prop_int})
 else:
     demography.add_mass_migration(
         time=t_int, source="Pop1", dest="Ghost", proportion=Prop_int)
+    introgression_events.append({"time": t_int, "source": "Pop1", "dest": "Ghost", "proportion": Prop_int})
 
 # Speciation event
 demography.add_mass_migration(
@@ -146,7 +154,6 @@ demography.add_mass_migration(
     time=t_sp123G4, source="Pop1", dest="Outgroup", proportion=1)
 
 
-
 ts = msprime.sim_ancestry(
     recombination_rate=Recomb_rate,
     sequence_length=Seq_len, 
@@ -161,10 +168,122 @@ ts = msprime.sim_ancestry(
     record_migrations=True,  # Needed for tracking segments.
 )
 
+# Count the number of tracts (haplotype blocks) and calculate their average length
+total_length = 0
+num_tracts = 0
+
+for migration in ts.migrations():
+    tract_length = migration.right - migration.left  # Calculate tract length
+    total_length += tract_length
+    num_tracts += 1
+
+# Calculate the average length
+average_length = total_length / num_tracts if num_tracts > 0 else 0
+
+print(f"Number of tracts (haplotype blocks) simulated: {num_tracts}")
+print(f"Average tract length (in nucleotides): {average_length:.2f}")
+print(f"total genome size is {Seq_len}, meaning each window will be {Seq_len/1000}")
 
 # Generate mutations on the tree sequence
 ts_mutes = msprime.sim_mutations(ts, rate=Mut_rate, random_seed=None)
 
+# Calculate total sequence divergence (average pairwise divergence)
+def calculate_total_divergence(tree_sequence):
+    divergence = 0
+    pair_count = 0
+
+    # Iterate over pairs of samples
+    for i, j in itertools.combinations(range(tree_sequence.num_samples), 2):
+        divergence += tree_sequence.divergence([[i], [j]])  # Pairwise divergence
+        pair_count += 1
+
+    average_divergence = divergence / pair_count if pair_count > 0 else 0
+    return average_divergence
+
+
+total_divergence = calculate_total_divergence(ts_mutes)
+print(f"Total sequence divergence (average pairwise divergence): {total_divergence:.6f} substitutions/site")
+
+#Get the 'diagnostic SNPs' that indicate introgression
+def count_introgressed_mutations(ts, introgression_events):
+    """
+    Counts the number of mutations that occurred along branches in introgressed regions,
+    calculates the average length of introgressed tracts, and computes the total
+    length of non-overlapping introgressed tracts.
+
+    Args:
+        ts (TreeSequence): The simulated tree sequence.
+        introgression_events (list): List of tracked introgression events.
+
+    Returns:
+        tuple: A tuple containing:
+            - int: Total number of introgressed tracts.
+            - float: Average length of introgressed tracts.
+            - int: Total number of "diagnostic" mutations in introgressed tracts.
+            - float: Total length of non-overlapping introgressed tracts.
+    """
+    # Generate introgressed tracts based on introgression events
+    introgressed_tracts = []
+    for migration in ts.migrations():
+        for event in introgression_events:
+            source_id = next((pop.id for pop in ts.populations() if pop.metadata.get("name") == event["source"]), None)
+            dest_id = next((pop.id for pop in ts.populations() if pop.metadata.get("name") == event["dest"]), None)
+            if source_id is not None and dest_id is not None:
+                if (event["time"] - 1 <= migration.time <= event["time"] + 1 and
+                        migration.source == source_id and migration.dest == dest_id):
+                    introgressed_tracts.append((migration.left, migration.right))
+
+    # Sort and merge overlapping tracts
+    introgressed_tracts.sort()
+    merged_tracts = []
+    if introgressed_tracts:
+        current_start, current_end = introgressed_tracts[0]
+        for start, end in introgressed_tracts[1:]:
+            if start <= current_end:  # Overlap
+                current_end = max(current_end, end)
+            else:  # No overlap
+                merged_tracts.append((current_start, current_end))
+                current_start, current_end = start, end
+        merged_tracts.append((current_start, current_end))  # Add the last tract
+
+    # Calculate the total length of introgressed tracts
+    total_tract_length = sum(end - start for start, end in merged_tracts)
+
+    # Calculate the average tract length
+    num_tracts = len(merged_tracts)
+    average_tract_length = total_tract_length / num_tracts if num_tracts > 0 else 0
+
+    # Loop through mutations and check if they are in introgressed regions
+    diagnostic_mutations = 0
+    for mutation in ts.mutations():
+        site_position = ts.site(mutation.site).position
+        for left, right in merged_tracts:
+            if left <= site_position < right:
+                diagnostic_mutations += 1
+                break
+
+    return num_tracts, average_tract_length, diagnostic_mutations, total_tract_length
+
+
+#Call the function
+num_int_tracts, average_int_tract_length, num_diagnostic_mutations, total_introgressed_length = count_introgressed_mutations(ts_mutes, introgression_events)
+
+print(f"Number of introgressed tracts: {num_int_tracts}")
+print(f"Average length of int tract: {average_int_tract_length}")
+print(f"Number of 'diagnostic' mutations in introgressed tracts: {num_diagnostic_mutations}")
+print(f"Total length of non-overlapping introgressed tracts: {total_introgressed_length}")
+
+# write to a quant file
+quant_log_file = "Sim_stats_log.tsv"
+
+#Create the quantitative data log file
+if not os.path.isfile(quant_log_file):
+	with open(quant_log_file, "a") as f:
+		f.write("JOBname\tSeq_len\tProp_int\tMut_rate\tRecomb_rate\tnum_tracts\taverage_length\ttotal_divergence\tnum_int_tracts\taverage_int_tract_length\ttotal_introgressed_length\tnum_diagnostic_mutations\n")
+
+#Write to the quant file
+with open (quant_log_file, "a") as f:
+	f.write(f"{JOBname}\t{Seq_len}\t{Prop_int}\t{Mut_rate}\t{Recomb_rate}\t{num_tracts}\t{average_length}\t{total_divergence}\t{num_int_tracts}\t{average_int_tract_length}\t{total_introgressed_length}\t{num_diagnostic_mutations}\n")
 
 #write a fasta file
 ts_mutes.write_fasta(out_dir+"full_chromosome.fa", reference_sequence=tskit.random_nucleotides(ts.sequence_length))
