@@ -34,7 +34,7 @@ parser.add_argument('-j', '--JOBname', type=str, metavar='', required=True, help
 parser.add_argument('-s', '--Seq_len', type=int, metavar='', required=False, default=10000000, help='Specify an interger to set length of total simulateed alignment (default = 10000000')
 parser.add_argument('-p', '--Prop_int', type=float, metavar='', required=False, default=0.2, help='Specify the proportion of genome to be introgressed with each introgression event (default = 0.2)')
 parser.add_argument('-m', '--Mut_rate', type=float, metavar='', required=False, default=0.0000001, help='Specify the mutation rate (default = 0.0000001)')
-parser.add_argument('-r', '--Recomb_rate', type=float, metavar='', required=False,default=0.0000000001, help='Specify the recomb rate (default = 0.0000000001)')
+parser.add_argument('-r', '--Recomb_rate', type=float, metavar='', required=False,default=0.000000001, help='Specify the recomb rate (default = 0.000000001)')
 parser.add_argument('-n', '--Ne', type=int, metavar='', required=False, default=10000, help='Specify the effective pop size (Ne) (default = 10000)')
 parser.add_argument('-g','--ghost', action='store_true', required=False, help='Add this flag to to simulate ghost introgression. Otherwise introgression will be "true"/"ingroup" introgression from P3 to P2"')
 
