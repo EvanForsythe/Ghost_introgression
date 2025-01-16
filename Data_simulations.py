@@ -279,11 +279,45 @@ quant_log_file = "Sim_stats_log.tsv"
 #Create the quantitative data log file
 if not os.path.isfile(quant_log_file):
 	with open(quant_log_file, "a") as f:
-		f.write("JOBname\tSeq_len\tProp_int\tMut_rate\tRecomb_rate\tnum_tracts\taverage_length\ttotal_divergence\tnum_int_tracts\taverage_int_tract_length\ttotal_introgressed_length\tnum_diagnostic_mutations\n")
+	    f.write("JOBname\t\
+Seq_len\t\
+Prop_int\t\
+Mut_rate\t\
+Recomb_rate\t\
+ghost\t\
+t_int\t\
+t_sp12\t\
+t_sp123\t\
+t_sp123G\t\
+t_sp123G4\t\
+num_tracts\t\
+average_length\t\
+total_divergence\t\
+num_int_tracts\t\
+average_int_tract_length\t\
+total_introgressed_length\t\
+num_diagnostic_mutations\n")
 
 #Write to the quant file
 with open (quant_log_file, "a") as f:
-	f.write(f"{JOBname}\t{Seq_len}\t{Prop_int}\t{Mut_rate}\t{Recomb_rate}\t{num_tracts}\t{average_length}\t{total_divergence}\t{num_int_tracts}\t{average_int_tract_length}\t{total_introgressed_length}\t{num_diagnostic_mutations}\n")
+	f.write(f"{JOBname}\t\
+{Seq_len}\t\
+{Prop_int}\t\
+{Mut_rate}\t\
+{Recomb_rate}\t\
+{ghost}\t\
+{t_int}\t\
+{t_sp12}\t\
+{t_sp123}\t\
+{t_sp123G}\t\
+{t_sp123G4}\t\
+{num_tracts}\t\
+{average_length}\t\
+{total_divergence}\t\
+{num_int_tracts}\t\
+{average_int_tract_length}\t\
+{total_introgressed_length}\t\
+{num_diagnostic_mutations}\n")
 
 #write a fasta file
 ts_mutes.write_fasta(out_dir+"full_chromosome.fa", reference_sequence=tskit.random_nucleotides(ts.sequence_length))
