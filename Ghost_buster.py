@@ -276,19 +276,21 @@ for i in range(0,100):
 #conduct z_test and get a p_value
 
 # Given information
-sample_mean = 0
-population_mean = np.average(delta_reps)
-print('pop mean:',population_mean)
+#switched the sample mean and pop mean which is now called null_hypothesis
+sample_mean = np.average(delta_reps)
+null_hypothesis = 0
+print('pop mean:',sample_mean)
 
 #population_std = stats.tstd(delta_reps)
-population_std = np.std(delta_reps, ddof=0)
+#changed degrees of freedom from 0 to 99
+population_std = np.std(delta_reps, ddof=99)
 
 print('pop std:',population_std)
 sample_size = len(delta_reps)
 print('sample size:',sample_size)
 
 # compute the z-score
-z_score = (sample_mean-population_mean)/(population_std/np.sqrt(sample_size))
+z_score = (sample_mean-null_hypothesis)/(population_std/np.sqrt(sample_size))
 print('Z-Score :',z_score)
 
 
@@ -297,17 +299,19 @@ p_value = (1-stats.norm.cdf(abs(z_score)))*2   #two-tailed test
 print(f'p-value :{p_value}')
 
 #create kernal density plot
+#changed population mean to sample mean
 plt.rcdefaults()
 sns.kdeplot(delta_reps)
 plt.axvline(x = 0, color = 'b')
-plt.title(f"Distribution mean: {population_mean}\np_value: {p_value}")
+plt.title(f"Distribution mean: {sample_mean}\np_value: {p_value}")
 plt.savefig(out_dir+"delta_plot.pdf")
 plt.close()
 
 
 #Write to the quant file
+#changed pop mean to sample mean
 with open (quant_log_file, "a") as f:
-	f.write(f"{job}\t{ticker12}\t{ticker23}\t{ticker13}\t{tickerunknown}\t{d_stat}\t{avg_12top}\t{avg_23top}\t{delta}\t{population_mean}\t{z_score}\t{p_value}\n")
+	f.write(f"{job}\t{ticker12}\t{ticker23}\t{ticker13}\t{tickerunknown}\t{d_stat}\t{avg_12top}\t{avg_23top}\t{delta}\t{sample_mean}\t{z_score}\t{p_value}\n")
 
 
 print("Done!")
