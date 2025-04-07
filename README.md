@@ -2,9 +2,10 @@
 # Ghostbuster
 1. [Introduction](#intro)
 2. [Installing Dependencies](#dependencies)
-3. [Running Ghost Buster](#running)
+3. [Running Ghostbuster](#running)
 4. [Arguments](#arguments)
 5. [Examples](#examples)
+6. [Running introgression simulations](#sims)
 
 ## <ins>**Introduction**</ins> <a name="intro"></a>
 
@@ -50,6 +51,43 @@ python Ghost_buster.py -i Examp_files/ -j test -t 2 -P1 Bs_ -P2 Cr_ -P3 At_ -out
 
 This run will create a folder named "OUT_test/" and write results to the folder.
 
+
+## <ins>**Running introgression simulations**</ins> <a name="sims"></a>
+
+We provide the script, Data_simulations.py to simuate introgression under different scenarios. 
+
+Arguments for unning the script:
+
+### General Arguments
+
+| Argument             | Description                                                                                                                | Required | Default        |
+|----------------------|----------------------------------------------------------------------------------------------------------------------------|----------|----------------|
+| `-j`, `--JOBname`     | Unique job name for this run. Avoid spaces or special characters (`_` is okay)                                            | Yes      | —              |
+| `-s`, `--Seq_len`     | Length of simulated alignment                                                                                             | No       | `10000000`     |
+| `-p`, `--Prop_int`    | Proportion of genome to be introgressed per event                                                                         | No       | `0.2`          |
+| `-m`, `--Mut_rate`    | Mutation rate                                                                                                              | No       | `0.0000001`    |
+| `-r`, `--Recomb_rate` | Recombination rate                                                                                                         | No       | `0.000000001`  |
+| `-n`, `--Ne`          | Effective population size (Ne)                                                                                            | No       | `10000`        |
+| `-g`, `--ghost`       | Add this flag to simulate ghost introgression. Otherwise simulates P3 → P2 introgression                                  | No       | `False`        |
+
+
+### Time Arguments
+
+| Argument               | Description                                                                  | Required | Default    |
+|------------------------|------------------------------------------------------------------------------|----------|------------|
+| `-i`, `--t_int`         | Time of introgression (years ago)                                            | No       | `40000`     |
+| `-2`, `--t_sp12`        | First most recent speciation event (years ago)                               | No       | `80000`     |
+| `-3`, `--t_sp123`       | Second most recent speciation event                                          | No       | `120000`    |
+| `-G`, `--t_sp123G`      | Third most recent speciation event                                           | No       | `160000`    |
+| `-4`, `--t_sp123G4`     | Fourth most recent speciation event                                          | No       | `200000`    |
+
+### Command
+
+Example command used to run the data simulations:
+
+```bash
+python Data_simulations.py -j test_ghost_sim --ghost
+```
 
 [Back to Top](#top)
 
