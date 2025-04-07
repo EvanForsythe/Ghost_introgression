@@ -8,7 +8,7 @@
 
 ## <ins>**Introduction**</ins> <a name="intro"></a>
 
-Four-taxon tests (e.g. Patterson's D-statistic) are widely used to identify cases of introgression between non-sister lineages in the analysis. However, there is growing evidence that introgression from an unsampled/extinct "ghost lineage" can obscure interpretation of four-taxon tests. Ghostbuster is a computational tool that applies a novel divergence-based test to distinguish between ghost lineage introgression and ingroup introgression. Ghostbuster is intended for cases in which a prior four-taxon test indicated significant introgression.
+Four-taxon tests (e.g. Patterson's D-statistic) are widely used to identify cases of introgression between non-sister lineages sampled in the analysis. However, there is growing evidence that introgression from an unsampled/extinct "ghost lineage" can obscure interpretation of four-taxon tests. Ghostbuster is a computational tool that applies a novel divergence-based test to distinguish between ghost lineage introgression and ingroup introgression. Ghostbuster is intended for cases in which a prior four-taxon test has already indicated significant introgression.
 
 A manuscript describing the method is currently under review. Check back here for citation information.
 
