@@ -89,8 +89,8 @@ if not skip:
         os.makedirs(out_dir)
         print('created folder: '+out_dir+'\nAll output files will be written to this folder\n')
 
-    #make a directory for the trees
-    os.makedirs(out_dir+"alns_and_trees/")
+    #make a directory for the seqs
+    os.makedirs(out_dir+"Pruned_seq_files/")
 
     #get a list of seq files to analyze 
     all_file_names = glob.glob(indir+"*.fasta")
@@ -103,17 +103,11 @@ if not skip:
     node_depth_df['node_depth'] = []
     node_depth_df['topology'] = []
 
-    #counter is for testing purposes 
-    counter = 0
-
-    print("Creating pruned alignments...")
+    print("Creating pruned sequence files...")
 
     #Loop through each file
     for filename in all_file_names:
-        #next three lines are for quick testing
-        #counter += 1
-        #if counter > 100:
-        #    break
+
         sequences = SeqIO.parse(filename, 'fasta')
 
         #Create an empty list    
@@ -142,23 +136,38 @@ if not skip:
                 out_rec_temp.id = "Outgroup"
                 keeper_rec_list.append(out_rec_temp)
                 
-        #Create an alignment of sequences
-        keeper_aln = Bio.Align.MultipleSeqAlignment(keeper_rec_list)
-        AlignIO.write(keeper_aln, out_dir+"alns_and_trees/pruned_"+filename.replace(indir, ""), "fasta")
+        # Write the unaligned sequences
+        SeqIO.write(keeper_rec_list, out_dir+"Pruned_seq_files/pruned_"+filename.replace(indir, ""), "fasta")
 
 
     #get a list of pruned seq files to analyze 
-    pruned_file_names = glob.glob(out_dir+"alns_and_trees/"+"pruned*.fasta")
+    pruned_file_names = glob.glob(out_dir+"Pruned_seq_files/"+"pruned*.fasta")
 
-    print(f"Inferring gene trees for {len(pruned_file_names)} alignments...")
+    print(f"Performing mulitple sequence alignment for {len(pruned_file_names)} files...")
+
+    #make a directory for the seqs
+    os.makedirs(out_dir+"Aligns_and_trees/")
 
     for file in pruned_file_names:
-        tree_command = ["iqtree", "-s", file, "-m", "TEST", "-nt", str(threads)]
+        aligned_file = file.replace("pruned_", "aligned_").replace("Pruned_seq_files/", "Aligns_and_trees/")
+
+        # Run MAFFT and write output to aligned file
+        with open(aligned_file, 'w') as out_handle:
+            subprocess.run(["mafft", "--auto", file], stdout=out_handle, stderr=subprocess.DEVNULL)
+
+
+    #get a list of aligned files to analyze 
+    aligned_file_names = glob.glob(out_dir+"Aligns_and_trees/"+"aligned*.fasta")
+
+    print(f"Inferring gene trees for {len(aligned_file_names)} alignments...")
+
+    for aln_file in aligned_file_names:
+        tree_command = ["iqtree", "-s", aln_file, "-m", "TEST", "-nt", str(threads)]
         #print(tree_command)
         subprocess.run(tree_command, stdout = subprocess.DEVNULL)
 
     #get a list of tree files to analyze
-    tree_file_names = glob.glob(out_dir+"alns_and_trees/"+"pruned*.treefile")
+    tree_file_names = glob.glob(out_dir+"Aligns_and_trees/"+"aligned*.treefile")
 
     for tree_file in tree_file_names:
         temp_tree = Phylo.read(tree_file, "newick")
@@ -235,15 +244,20 @@ for i in topo_list:
     else:
         tickerunknown += 1 
 
-#Make sure that none of the tickers are
+#Make sure that none of the tickers are empty
 if ticker12 < 5 or ticker23 < 5:
-    print("ERROR: one of the required topologies was present less than 5 times")
-    with open (quant_log_file, "a") as f:
-         f.write(f"{job}\t{ticker12}\t{ticker23}\t{ticker13}\t{tickerunknown}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\n")
-    sys.exit()
+    print("WARNING: one of the required topologies was present less than 5 times. This is a sign that the 'introgression topology' may not be present in your dataset.")    
+    
+    print("Proceeding with analysis, but interpret results with caution...")
+    
+    #with open (quant_log_file, "a") as f:
+    #     f.write(f"{job}\t{ticker12}\t{ticker23}\t{ticker13}\t{tickerunknown}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\n")
+    #sys.exit()
 
 # Calculate the D-statistic
 d_stat = (ticker23-ticker13)/(ticker23+ticker13) 
+
+print("\nTopology results:")
 
 print(f"Number of 12-top trees: {ticker12}")
 print(f"Number of 23-top trees: {ticker23}")
