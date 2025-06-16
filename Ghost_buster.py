@@ -244,25 +244,25 @@ for i in topo_list:
     else:
         tickerunknown += 1 
 
+print("\nTopology results:")
+
+print(f"Number of 12-topology trees: {ticker12}")
+print(f"Number of 23-toology trees: {ticker23}")
+print(f"Number of 13-topology trees: {ticker13}")
+
 #Make sure that none of the tickers are empty
 if ticker12 < 5 or ticker23 < 5:
     print("WARNING: one of the required topologies was present less than 5 times. This is a sign that the 'introgression topology' may not be present in your dataset.")    
     
     print("Proceeding with analysis, but interpret results with caution...")
     
-    #with open (quant_log_file, "a") as f:
-    #     f.write(f"{job}\t{ticker12}\t{ticker23}\t{ticker13}\t{tickerunknown}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\n")
-    #sys.exit()
+    with open (quant_log_file, "a") as f:
+         f.write(f"{job}\t{ticker12}\t{ticker23}\t{ticker13}\t{tickerunknown}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\n")
+    sys.exit()
 
 # Calculate the D-statistic
 d_stat = (ticker23-ticker13)/(ticker23+ticker13) 
-
-print("\nTopology results:")
-
-print(f"Number of 12-top trees: {ticker12}")
-print(f"Number of 23-top trees: {ticker23}")
-print(f"Number of 13-top trees: {ticker13}")
-print(f"D-statistic based on tree counts is: {d_stat}")
+print(f"D-statistic based on tree counts is: {d_stat}.\n note that this is a tree-count based D-statistics, not a site-pattern based analysis")
 
 ###### start generating statistics 
 
