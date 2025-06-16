@@ -93,7 +93,15 @@ if not skip:
     os.makedirs(out_dir+"Pruned_seq_files/")
 
     #get a list of seq files to analyze 
-    all_file_names = glob.glob(indir+"*.fasta")
+    # Get a list of seq files to analyze (.fasta or .fa)
+    fasta_files = glob.glob(os.path.join(indir, "*.fasta"))
+    fa_files = glob.glob(os.path.join(indir, "*.fa"))
+    all_file_names = sorted(set(fasta_files + fa_files))  # deduplicate and sort
+
+    # Warn if too few files
+    if len(all_file_names) < 10:
+        print(f"WARNING: Only {len(all_file_names)} sequence files found in {indir}. Expected hundreds of files. Proceeding with caution... Note, this will likely cause issues downstream")
+
 
     #create an empty dataframe
     node_depth_df = pd.DataFrame()
@@ -262,7 +270,7 @@ if ticker12 < 5 or ticker23 < 5:
 
 # Calculate the D-statistic
 d_stat = (ticker23-ticker13)/(ticker23+ticker13) 
-print(f"D-statistic based on tree counts is: {d_stat}.\n note that this is a tree-count based D-statistics, not a site-pattern based analysis")
+print(f"D-statistic based on tree counts is: {d_stat}.\n note that this is a tree-count based D-statistics, not a site-pattern based analysis\n\n")
 
 ###### start generating statistics 
 
