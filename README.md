@@ -26,7 +26,7 @@ conda env create -f ghostbuster_env.yml
 ## <ins>**Arguments**</ins> <a name="arguments"></a>
 These arguments can also be referenced in your command line using the -h flag.
 ```bash
-./Ghost_Buster.py -h
+python Ghost_Buster.py -h
 ```
 
 | Argument             | Description                                                                                                                    | Required |
