@@ -23,6 +23,12 @@ conda env create -f ghostbuster_env.yml
 
 ## <ins>**Running Ghostbuster**</ins> <a name="running"></a>
 
+Please refer to the manuscript Forsythe et al., (in review) entitled "Detecting cryptic ghost lineage introgression in four-taxon genomic datasets" before running a ghostbuster analysis. Here are a few considerations that may be helpful is designing a ghostbuster analysis of your data:
+ - Ghostbuster requires that users define an a priori species tree topology (provided the P1, P2, P3, and outgroup arguments).
+ - Ghostbuster is intended for cases in which introgression has already been identified with a D (or related) statistic analysis.
+ - Users should define their P1, P2, and P3 lineages such that the previously identified introgression event is between P2 and P3. If prior D-statistics instead indicated introgression between P1 and P3 (i.e. a significantly negative D-statistic), then this can be accounted for by swapping P1 and P2 species in Ghostbuster analyses. Making this change amounts to 'swiveling' a branch on the species tree without changing the topology of the species tree. 
+- Please note that only gene trees displaying the 'species topology' and 'introgression topology' are included in Ghostbuster analyses. Gene trees displaying a third minor topology (P1 and P3 sister) are regarded as the 'ILS topology' and are not used.
+  
 ## <ins>**Arguments**</ins> <a name="arguments"></a>
 These arguments can also be referenced in your command line using the -h flag.
 ```bash
